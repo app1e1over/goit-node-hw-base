@@ -1,50 +1,63 @@
-const fs = require("fs/promises");
-const path = "models/contacts.json";
+const mongoose = require('mongoose');
+mongoose.connect("mongodb+srv://st07kish:998FBYt5agRV66L@cluster0.zmrvdcy.mongodb.net/").then(()=>{
+  if(mongoose.connection.readyState === 1){
+    console.log("Database connection successful");
+  }else{
+    console.log("Something is wrong");
 
-const genId = () => {
-  let id = "";
-  for (let i = 0; i < 21; i++) {
-    let ch = String.fromCharCode(65 + Math.floor(Math.random() * 25));
-    if (Math.random() > 0.5) {
-      ch = ch.toLowerCase();
-    }
-    id += ch;
+    process.exit(1)
   }
-  return id;
-};
-const saveContact = async (id, name, email, phone) => {
-  const res = { id, name, email, phone };
-  const contacts = await listContacts();
-  contacts.push(res);
-  fs.writeFile(path, JSON.stringify(contacts));
-  return res;
-};
+})
+
+
+
+const contactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Set name for contact'],
+  },
+  email: {
+    type: String,
+  },
+  phone: {
+    type: String,
+  },
+  favorite: {
+    type: Boolean,
+    default: false,
+  },
+})
+const Contact = mongoose.model("contact", contactSchema)
 
 const listContacts = async () => {
-  return JSON.parse((await fs.readFile(path)).toString());
+  return Contact.find()
 };
 
 const getContactById = async (id) => {
-  const contacts = await listContacts();
-  return contacts.find((c) => c.id === id);
+  return Contact.findById(id)
 };
 
 const removeContact = async (contactId) => {
-  const old = await listContacts();
-  const current = old.filter((v) => v.id !== contactId);
-  if (old.length !== current.length) {
-    fs.writeFile(path, JSON.stringify(current));
+  const todel = await getContactById(contactId)
+  if (todel!==undefined) {
+    await Contact.deleteOne({_id:contactId}).exec()
     return true;
   }
   return false;
 };
 
-const addContact = async ({ name, email, phone }) => {
-  return await saveContact(genId(), name, email, phone);
+const addContact = async ({ name, email, phone, favorite }) => {
+  const cont = new Contact()
+  cont.name = name;
+  cont.email = email
+  cont.phone=phone
+  cont.favorite =favorite
+  await cont.save();
+  return cont;
 };
 const updateContact = async (contactId, body) => {
   const guy = await getContactById(contactId);
-  if (guy === undefined) {
+  if (guy === null) {
     return false;
   }
   const {
@@ -52,22 +65,26 @@ const updateContact = async (contactId, body) => {
     name = guy.name,
     email = guy.email,
     phone = guy.phone,
+    favorite = guy.favorite
   } = body;
 
-  const contacts = await listContacts();
-  contacts.forEach((c, i) => {
-    if(c.id===contactId){
-      contacts[i] =  { id, name, email, phone };
-    }
-  });
+  Contact.updateOne({_id: contactId}, {name, email, phone, favorite}).exec()
 
-  fs.writeFile(
-    path,
-    JSON.stringify(contacts)
-  );
-
-  return { id, name, email, phone };
+  return { id, name, email, phone, favorite };
 };
+const updateStatusContact = async (contactId, {favorite}) => {
+  try{
+    await Contact.updateOne({_id: contactId}, {favorite}).exec()
+
+  }catch{
+    return null;
+  }
+  const guy = await getContactById(contactId);
+
+  return guy
+}
+
+
 
 module.exports = {
   listContacts,
@@ -75,4 +92,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact
 };

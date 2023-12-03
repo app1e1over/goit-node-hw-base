@@ -11,7 +11,7 @@ router.get("/", async (req, res, next) => {
 
 router.get("/:contactId", async (req, res, next) => {
   const cont = await contacts.getContactById(req.params.contactId);
-  if (cont !== undefined) {
+  if (cont !== null) {
     res.json(cont);
     res.status(200);
   } else {
@@ -25,6 +25,7 @@ router.post("/", async (req, res, next) => {
     name: Joi.string().min(3).max(50).required(),
     email: Joi.string().min(7).email().required(),
     phone: Joi.string().min(10).max(20).required(),
+    favorite: Joi.boolean().required(),
   });
   const validated = schema.validate(req.body);
   if (validated.error != null) {
@@ -56,6 +57,7 @@ router.put("/:contactId", async (req, res, next) => {
       name: Joi.string().min(3).max(50),
       email: Joi.string().min(7).email(),
       phone: Joi.string().min(10).max(20),
+      favorite: Joi.boolean(),
     })
     .min(1);
 
@@ -75,4 +77,27 @@ router.put("/:contactId", async (req, res, next) => {
   }
 });
 
+router.patch("/:contactId/favorite", async (req, res, next) => {
+  const id = req.params.contactId;
+
+  const schema = Joi.object().keys({
+    favorite: Joi.boolean().required(),
+  });
+  const validated = schema.validate(req.body);
+  if (validated.error != null) {
+    res.status(400);
+    res.json({ message: validated.error.message });
+  } else {
+    const r=await contacts.updateStatusContact(id, validated.value)
+    if(r===null){
+      res.status(404);
+      res.json({message:"no such contact"});
+
+    }else{
+      res.json(r);
+      res.status(200);
+    }
+
+  }
+});
 module.exports = router;
