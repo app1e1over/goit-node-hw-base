@@ -83,7 +83,7 @@ router.post("/logout", async (req, res, next) =>{
     const r= await users.current(tok)
     if(r){
         res.json(r);
-        res.status(20);
+        res.status(200);
     }else{
         res.status(401);
         res.json({message: "Not authorized"});
