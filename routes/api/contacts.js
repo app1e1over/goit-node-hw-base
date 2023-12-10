@@ -4,6 +4,9 @@ const Joi = require("joi");
 
 const router = express.Router();
 
+
+
+
 router.get("/", async (req, res, next) => {
   res.json(await contacts.listContacts());
   res.status(200);
