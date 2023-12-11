@@ -85,7 +85,11 @@ const logout = async (token) =>{
     return us;
 }
 const current = async (token)=>{
-  return await User.findOne({email:jwt.decode(token).mail})
+  try{
+    return await User.findOne({email:jwt.verify(token, word).mail})
+  }catch{
+    console.log("wrooong");
+  }
 
 }
 

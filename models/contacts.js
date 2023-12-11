@@ -1,14 +1,4 @@
 const mongoose = require('mongoose');
-mongoose.connect("mongodb+srv://st07kish:998FBYt5agRV66L@cluster0.zmrvdcy.mongodb.net/").then(()=>{
-  if(mongoose.connection.readyState === 1){
-    console.log("Database connection successful");
-  }else{
-    console.log("Something is wrong");
-
-    process.exit(1)
-  }
-})
-
 
 
 const contactSchema = new mongoose.Schema({
@@ -33,35 +23,40 @@ const contactSchema = new mongoose.Schema({
 })
 const Contact = mongoose.model("contact", contactSchema)
 
-const listContacts = async () => {
-  return Contact.find()
+const listContacts = async (userid) => {
+  return Contact.find({owner:userid})
 };
 
-const getContactById = async (id) => {
-  return Contact.findById(id)
+const getContactById = async (id, userid) => {
+  const res =await Contact.findById(id);
+  if(res && res.owner===userid)
+    return res
+  else
+    return null
 };
 
-const removeContact = async (contactId) => {
-  const todel = await getContactById(contactId)
-  if (todel!==undefined) {
+const removeContact = async (contactId, userid) => {
+  const todel = await getContactById(contactId, userid)
+  if (todel && todel.owner===userid) {
     await Contact.deleteOne({_id:contactId}).exec()
     return true;
   }
   return false;
 };
 
-const addContact = async ({ name, email, phone, favorite }) => {
+const addContact = async ({ name, email, phone, favorite }, userid) => {
   const cont = new Contact()
   cont.name = name;
   cont.email = email
   cont.phone=phone
   cont.favorite =favorite
+  cont.owner = userid;
   await cont.save();
   return cont;
 };
-const updateContact = async (contactId, body) => {
+const updateContact = async (contactId, body, userid) => {
   const guy = await getContactById(contactId);
-  if (guy === null) {
+  if (guy === null || guy.owner===userid) {
     return false;
   }
   const {
@@ -76,14 +71,14 @@ const updateContact = async (contactId, body) => {
 
   return { id, name, email, phone, favorite };
 };
-const updateStatusContact = async (contactId, {favorite}) => {
+const updateStatusContact = async (contactId, {favorite}, userid) => {
   try{
-    await Contact.updateOne({_id: contactId}, {favorite}).exec()
+    await Contact.updateOne({_id: contactId, owner:userid}, {favorite}).exec()
 
   }catch{
     return null;
   }
-  const guy = await getContactById(contactId);
+  const guy = await getContactById(contactId, userid);
 
   return guy
 }

@@ -19,7 +19,10 @@ const validate =  async (req, res, next) => {
     }
 
   };
-
+  const current =  async (req, res, next) => {
+    res.locals.user= await users.current(req.headers.authorization);
+    next();
+  }
 
 router.get("/all", async (req, res, next) => {
     res.json(await users.all());
@@ -89,4 +92,4 @@ router.post("/logout", async (req, res, next) =>{
         res.json({message: "Not authorized"});
     }
 })
-  module.exports ={ router, validate};
+  module.exports ={ router, validate, current};

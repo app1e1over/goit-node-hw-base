@@ -1,3 +1,14 @@
+const mongoose = require('mongoose');
+mongoose.connect("mongodb+srv://st07kish:998FBYt5agRV66L@cluster0.zmrvdcy.mongodb.net/").then(()=>{
+  if(mongoose.connection.readyState === 1){
+    console.log("Database connection successful");
+  }else{
+    console.log("Something is wrong");
+
+    process.exit(1)
+  }
+})
+
 const express = require('express')
 const logger = require('morgan')
 const cors = require('cors')
@@ -14,6 +25,7 @@ app.use(cors())
 app.use(express.json())
 
 app.use('/api/contacts', users.validate)
+app.use('/api/contacts', users.current)
 app.use('/api/contacts', contactsRouter)
 app.use('/api/users', users.router)
 
