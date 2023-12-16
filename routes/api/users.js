@@ -1,7 +1,9 @@
 const express = require("express");
 const users = require("../../models/users")
 const Joi = require("joi");
-
+const multer  = require('multer')
+const upload = multer({ dest: 'temp/' })
+const Jimp = require("jimp");
 const router = express.Router();
 
 
@@ -13,7 +15,6 @@ const validate =  async (req, res, next) => {
 
     }
     else{
-
         res.json({ message: "Not authorized"});
         res.status(401);
     }
@@ -91,5 +92,20 @@ router.post("/logout", async (req, res, next) =>{
         res.status(401);
         res.json({message: "Not authorized"});
     }
+})
+
+router.patch("/avatars", upload.single('avatar'), async (req, res, next)=>{
+  const initFile = req.file;
+  console.log(initFile);
+  Jimp.read(initFile.path, (err, lenna) => {
+    if (err) throw err;
+    lenna
+      .resize(250, 250) // resize
+      .quality(60) // set JPEG quality
+      .greyscale() // set greyscale
+      .write("public/avatars/"+res.locals.user.email); // save
+  });
+  res.status(200);
+  res.json({avatarURL: "/avatars/"+res.locals.user.email})
 })
   module.exports ={ router, validate, current};

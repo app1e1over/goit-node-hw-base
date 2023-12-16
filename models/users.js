@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const gravatar = require('gravatar');
 
 const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
@@ -7,6 +8,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Set password for user"],
   },
+  avatarURL: String,
   email: {
     type: String,
     required: [true, "Email is required"],
@@ -35,6 +37,7 @@ const register = async ({ password, email, subscription }) => {
   const u = new User();
   u.email = email;
   u.subscription = subscription;
+  u.avatarURL = gravatar.url(email);
   bcrypt.genSalt(saltRounds, function (_, salt) {
     bcrypt.hash(password, salt, function (_, hash) {
       u.password = hash;
